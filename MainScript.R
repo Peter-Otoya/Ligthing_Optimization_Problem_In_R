@@ -169,4 +169,19 @@ source("LightingOptimizer.R")
 optimal <- optimizeLighting(Forecasted_Lux)
 optimal
 
+#Final cleansing to include descriptive names, hours and days
+schedule <- forecast_final[order(forecast_final$Day, forecast_final$Hour),]
+schedule <- schedule[, c("Hour","Day")]
+rownames(schedule) = 1:70
+opt <- data.frame(optimal)
+optimal_schedule <- cbind(opt,schedule)
+#Change names to more descriptive name
+names(optimal_schedule)[names(optimal_schedule) == "X5"] <- "Cost"
+names(optimal_schedule)[names(optimal_schedule) == "X4"] <- "Automatic Curtain"
+names(optimal_schedule)[names(optimal_schedule) == "X3"] <- "Curtain Position"
+names(optimal_schedule)[names(optimal_schedule) == "X2"] <- "Energy Consumed LED"
+names(optimal_schedule)[names(optimal_schedule) == "X1"] <- "LED Intensity"
+
+#Write data in CSV
+write.csv(optimal_schedule, file = "Optimal_Schedule.csv")
 
