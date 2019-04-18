@@ -1,8 +1,10 @@
 library(jsonlite)
 
 #Setting Working directory for files
-#setwd("C:\Users\PC\Documents\BABD - Projects, Hands On\IOT\ligthing-optimization-r")
-setwd("~/Documents/GitHub/Ligthing_Optimization_Problem_In_R")
+
+setwd("C:\Users\PC\Documents\BABD - Projects, Hands On\IOT\ligthing-optimization-r")
+#setwd("~/Documents/GitHub/Ligthing_Optimization_Problem_In_R")
+
 #Reading files and cleansing
 #JSON File with forecast
 forecast <- fromJSON("forecast.json")
@@ -120,6 +122,10 @@ names(agg_light)[names(agg_light) == "Group.1"] <- "Hour"
 names(agg_light)[names(agg_light) == "Group.2"] <- "Day"
 names(agg_light)[names(agg_light) == "x"] <- "light"
 
+##########################################################
+# Forecasted Lux Hourly Calculation for all the week
+##########################################################
+
 #Merge forecast and Light distribution
 Lux <- merge(forecast_final,agg_light, by=c("Hour","Day"))
 #Calculate Forecasted lux
@@ -151,68 +157,16 @@ names(Forecasted_Lux)[names(Forecasted_Lux) == "Forecasted"] <- "forecasted_lux"
 names(Forecasted_Lux)[names(Forecasted_Lux) == "Day"] <- "day"
 names(Forecasted_Lux)[names(Forecasted_Lux) == "Hour"] <- "hour"
 
+#order by day, hour
+Forecasted_Lux <- Forecasted_Lux[order(Forecasted_Lux$day, Forecasted_Lux$hour), ]
+
+# Load optimizer module
+source("LightingOptimizer.R")
+
 ##############################################################
-# Optimization Code
+# Optimization execution
 ##############################################################
-
-# Optimize lighting function
-# Will output a matrix of 63 * 4 with the values of the 4 control parameters that minimize cost.
-#
-optimizeLighting <- function(input){
-  
-  input <- data.frame("forecasted_lux" = 1:(13*5), "hour" = 1:(13*5) , "day" = 1:(13*5))
-  timeVector = 1:nrow(input) # time in weeks.
-  minTotalCost = 999999
-  
-  optimalSolutionForAutoCurtains = matrix(0L, nrow = length(timeVector), ncol = 4)
-  for(t in timeVector){
-    minCostForHour_t = 9999999999
-    
-    for(I in c(0, 0.5, 1)){
-      for(B in c(0, 0.3, 0.5)){
-        for(C in c(1, 0.7, 0.4)){
-          costForHour_t = calculateCostForHour(t, I, B, C, 1)
-          if(costForHour_t < minCostForHour_t){
-            minCostForHour_t = costForHour_t
-            optimalSolutionForAutoCurtains[t,]= c(I, B, C, 1)
-          }
-        }
-      }
-    }
-  }
-  
-  return (optimalSolutionForAutoCurtains)
-}
-
-# Cost function
-# L = 450*I + Forecasted_Lux*C
-# CostLackComfort(L) = abs(L-450) if x < 450, 0 if x in [450, 650], abs(L-650) if x > 650
-# Cost_Function = costLackComfort(L) + B*0.22 + {0|1}*0.022
-calculateCostForHour <- function(t, I, B, C, autoCurtains){
-  forecasted_lux = input[t, "forecasted_lux"]
-  L = 450*I + forecasted_lux*C
-  totalCostForHour = costLackOfComfort(L) + B*0.22 + autoCurtains*0.022
-  return (totalCostForHour)
-}
-
-costLackOfComfort <- function(L){
-  if(L < 450){
-    return (450-L)
-  }
-  if(L > 650){
-    return (650-L)
-  }
-  if(450 <= L && L <= 650){
-    return (0)
-  }
-}
-
-# Same for x = 0.
-
-
-
-
-
-
+optimal <- optimizeLighting(Forecasted_Lux)
+optimal
 
 
