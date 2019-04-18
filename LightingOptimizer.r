@@ -62,6 +62,13 @@ optimizeLighting <- function(input){
   #Compare between auto curtains and manual curtains weekly cost and return cheapest option
   weekCostAuto = sum(optimalSolutionForAutoCurtains[,5])
   weekCostManual = sum(optimalSolutionForManualCurtains[,5])
+  
+  print("weekly cost auto curtains")
+  print(weekCostAuto)
+  
+  print("weekly cost manual curtains")
+  print(weekCostManual)
+  
   if( weekCostAuto < weekCostManual ){
     return (optimalSolutionForAutoCurtains)
   }
